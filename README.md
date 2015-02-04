@@ -1,14 +1,55 @@
-FreeSWITCH dialer for performance tests
-=======================================
+FreeSWITCH call generator for performance tests
+===============================================
 
 This is a simple dialer that connects to FreeSWITCH via event socket and
-originates calls at a given interval.
+originates calls at a given interval. Each call is sent to a specified
+destination number via loopback endpoint, in specified context. For
+example, the following contexts will forward all calls to some remote
+servers:
+
+```
+<!-- File: /etc/freeswitch/dialplan/dialer.xml -->
+<include>
+  <context name="dialer01">
+    <extension name="to_sbc">
+      <condition>
+        <action application="set" data="sip_h_X-Asterisk-AccountNo=X839546"/>
+        <action application="bridge"
+                data="sofia/ext5081/${destination_number}@203.0.113.55"/>
+      </condition>
+    </extension>
+  </context>
+  <context name="dialer02">
+    <extension name="to_lab">
+      <condition>
+        <action application="bridge"
+                data="sofia/ext5081/moh@lab77.voxserv.net"/>
+      </condition>
+    </extension>
+  </context>
+</include>
+```
+
+Keep in mind that the default limit of sessions per second in FreeSWITCH
+is 30 (`sessions-per-second` parameter in
+`autoload_configs/switch.conf.xml`). Because of the loopback endpoint,
+each call occupies 3 channels, and this results in 10 calls per second
+maximum.
+
+For example, the following command would start 100 calls, and each call
+would last 10 minutes:
+
+```
+perl /opt/freeswitch-perf-dialer/dialer.pl \
+  --ncalls=100 --cps=9 --duration=600 --context=dialer02
+```
+
 
 Installing on Debian 7
 ----------------------
 
 ```
-apt-get install -y curl emacs git wireshark sysstat
+apt-get install -y curl git
 
 cat >/etc/apt/sources.list.d/freeswitch.list <<EOT
 deb http://files.freeswitch.org/repo/deb/debian/ wheezy main
@@ -75,4 +116,8 @@ Options:
   --help            this help message
 
 ```
- 
+
+Author and License
+------------------
+Copyright (c) 2015 Stanislav Sinyagin <ssinyagin@k-open.com>
+This software is distributed under the MIT license.
