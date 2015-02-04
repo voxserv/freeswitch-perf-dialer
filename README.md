@@ -91,7 +91,6 @@ git clone https://github.com/voxserv/freeswitch-perf-dialer.git
 
 ```
 
-You need to edit the FreeSWITCH dialplan, so that it routes the call somewhere.
 
 
 
@@ -99,7 +98,6 @@ Usage
 -----
 
 ```
-
 perl /opt/freeswitch-perf-dialer/dialer.pl --help
 
 Usage: /opt/freeswitch-perf-dialer/dialer.pl [options...]
@@ -114,10 +112,10 @@ Options:
   --ncalls=N        [10] total number of calls
   --cps=N           [10] rate in calls per second
   --help            this help message
-
 ```
 
 Author and License
 ------------------
 Copyright (c) 2015 Stanislav Sinyagin <ssinyagin@k-open.com>
+
 This software is distributed under the MIT license.
