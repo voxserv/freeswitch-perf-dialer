@@ -57,6 +57,8 @@ You need to edit the FreeSWITCH dialplan, so that it routes the call somewhere.
 Usage
 -----
 
+```
+
 perl /opt/freeswitch-perf-dialer/dialer.pl --help
 
 Usage: /opt/freeswitch-perf-dialer/dialer.pl [options...]
@@ -72,5 +74,5 @@ Options:
   --cps=N           [10] rate in calls per second
   --help            this help message
 
-
+```
  
