@@ -15,7 +15,7 @@ servers:
       <condition>
         <action application="set" data="sip_h_X-Asterisk-AccountNo=X839546"/>
         <action application="bridge"
-                data="sofia/ext5081/${destination_number}@203.0.113.55"/>
+                data="sofia/external/${destination_number}@203.0.113.55"/>
       </condition>
     </extension>
   </context>
@@ -23,7 +23,7 @@ servers:
     <extension name="to_lab">
       <condition>
         <action application="bridge"
-                data="sofia/ext5081/moh@lab77.voxserv.net"/>
+                data="sofia/external/moh@lab77.voxserv.net"/>
       </condition>
     </extension>
   </context>
