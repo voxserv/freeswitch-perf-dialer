@@ -23,6 +23,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Time::HiRes;
+use POSIX;
 use ESL;
 
 $| = 1;
@@ -51,7 +52,7 @@ my $ok = GetOptions
      'context=s'     => \$context,
      'duration=i'    => \$duration,
      'ncalls=i'      => \$ncalls,
-     'cps=i'         => \$cps,
+     'cps=f'         => \$cps,
      'help'          => \$help_needed,
     );
 
@@ -107,8 +108,12 @@ while( $nc < $ncalls )
     }
 
     my $uuid = $esl->api('create_uuid')->getBody();
+    my ($time_epoch, $time_hires) = Time::HiRes::gettimeofday();
     $esl->bgapi(sprintf($originate_string, $uuid, $dest));
     $esl->bgapi(sprintf('sched_hangup +%d %s', $duration, $uuid));
-    
-    print $nc, "\n";    
+
+    printf("%.6d: %s.%.6d\n",
+           $nc,
+           POSIX::strftime('%Y-%m-%d %H:%M:%S', localtime($time_epoch)),
+           $time_hires);
 }
