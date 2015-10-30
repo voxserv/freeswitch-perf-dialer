@@ -34,7 +34,9 @@ my $fs_password = 'ClueCon';
 
 my $callerid = '12126647665';
 my $dest = '13115552368';
+my $playback = 'local_stream://moh';
 my $context = 'public';
+my $endpoint;
 
 my $duration = 60;
 my $ncalls = 10;
@@ -50,9 +52,11 @@ my $ok = GetOptions
      'cid=s'         => \$callerid,
      'dest=s'        => \$dest,
      'context=s'     => \$context,
+     'endpoint=s'    => \$endpoint,
      'duration=i'    => \$duration,
      'ncalls=i'      => \$ncalls,
      'cps=f'         => \$cps,
+     'play=s'        => \$playback,
      'help'          => \$help_needed,
     );
 
@@ -67,10 +71,18 @@ if( not $ok or $help_needed or scalar(@ARGV) > 0 )
     "  --cid=NUMBER      \[$callerid\] caller ID\n",
     "  --dest=NUMBER     \[$dest\] destination number\n",
     "  --context=NAME    \[$context\] FreeSWITCH context name\n",
+    "  --endpoint=STRING destination endpoint\n",
     "  --duration=N      \[$duration\] call duration in seconds\n",
     "  --ncalls=N        \[$ncalls\] total number of calls\n",
     "  --cps=N           \[$cps\] rate in calls per second\n",
-    "  --help            this help message\n";
+    "  --play=STRING     \[$playback\] playback argument\n",
+    "  --help            this help message\n",
+    "\n",
+    "If endpoint is specified, --dest and --context are ignored.\n",
+    "Otherwise, the call is sent to the loopback endpoint with the specified\n",
+    "context and destination number\n",
+    "\n",
+    ;
     exit 1;
 }
 
@@ -80,11 +92,19 @@ my $originate_string =
     'origination_uuid=%s,' . 
     'originate_timeout=60,' .
     'origination_caller_id_number=' . $callerid . ',' .
-    'origination_caller_id_name=' . $callerid . '}' .
-    'loopback/%s/' . $context .
-    ' ' .
-    '&playback(local_stream://moh)';
-    
+    'origination_caller_id_name=' . $callerid . '}';
+
+if( defined($endpoint) )
+{
+    $originate_string .= $endpoint;
+}
+else
+{
+    $originate_string .= 'loopback/' . $dest . '/' . $context;
+}
+
+$originate_string .=  ' ' . '&playback(' . $playback . ')';
+
 
 my $esl = new ESL::ESLconnection($fs_host,
                                  sprintf('%d', $fs_port),
@@ -109,7 +129,7 @@ while( $nc < $ncalls )
 
     my $uuid = $esl->api('create_uuid')->getBody();
     my ($time_epoch, $time_hires) = Time::HiRes::gettimeofday();
-    $esl->bgapi(sprintf($originate_string, $uuid, $dest));
+    $esl->bgapi(sprintf($originate_string, $uuid));
     $esl->bgapi(sprintf('sched_hangup +%d %s', $duration, $uuid));
 
     printf("%.6d: %s.%.6d\n",
