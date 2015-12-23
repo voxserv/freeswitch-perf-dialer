@@ -38,6 +38,7 @@ my $context = 'public';
 
 my $duration = 60;
 my $ncalls = 10;
+my $forever;
 my $cps = 10;
 
 my $help_needed;
@@ -52,6 +53,7 @@ my $ok = GetOptions
      'context=s'     => \$context,
      'duration=i'    => \$duration,
      'ncalls=i'      => \$ncalls,
+     'forever'       => \$forever,
      'cps=f'         => \$cps,
      'help'          => \$help_needed,
     );
@@ -69,6 +71,7 @@ if( not $ok or $help_needed or scalar(@ARGV) > 0 )
     "  --context=NAME    \[$context\] FreeSWITCH context name\n",
     "  --duration=N      \[$duration\] call duration in seconds\n",
     "  --ncalls=N        \[$ncalls\] total number of calls\n",
+    "  --forever         run endlessly and ignore ncalls\n",
     "  --cps=N           \[$cps\] rate in calls per second\n",
     "  --help            this help message\n";
     exit 1;
@@ -96,7 +99,7 @@ my $interval = 1.0/$cps;
 my $nc = 0;
 my $start = Time::HiRes::time();
 
-while( $nc < $ncalls )
+while( $forever or $nc < $ncalls )
 {
     $nc++;
 
