@@ -45,31 +45,34 @@ perl /opt/freeswitch-perf-dialer/dialer.pl \
 ```
 
 
-Installing on Debian 7
+Installing on Debian 8
 ----------------------
 
 ```
 apt-get install -y curl git
 
 cat >/etc/apt/sources.list.d/freeswitch.list <<EOT
-deb http://files.freeswitch.org/repo/deb/debian/ wheezy main
+deb http://files.freeswitch.org/repo/deb/freeswitch-1.6/ jessie main
 EOT
 
 curl http://files.freeswitch.org/repo/deb/debian/freeswitch_archive_g0.pub |\
 apt-key add -
 
-apt-get update && apt-get install -y freeswitch-all 
-
 cd /etc
 git clone https://github.com/voxserv/freeswitch_conf_minimal.git freeswitch
 
-service freeswitch start
+apt-get update && apt-get install -y freeswitch-all 
+
+systemctl enable freeswitch
+systemctl start freeswitch
+
 
 # Install the ESL module for Perl. It's not available in a package, so
 # we get the whole source and build only the Perl module
 
+apt-get update && \
 apt-get install -y autoconf automake devscripts gawk g++ git-core \
- libjpeg-dev libncurses5-dev libtool make python-dev gawk pkg-config \
+ libjpeg-dev libncurses5-dev libtool-bin make python-dev gawk pkg-config \
  libtiff5-dev libperl-dev libgdbm-dev libdb-dev gettext libssl-dev \
  libcurl4-openssl-dev libpcre3-dev libspeex-dev libspeexdsp-dev \
  libsqlite3-dev libedit-dev libldns-dev libpq-dev \
@@ -77,14 +80,13 @@ apt-get install -y autoconf automake devscripts gawk g++ git-core \
  python-dev php5-dev libonig-dev libqdbm-dev libedit-dev
 
 
-cd /usr/src
-git clone -b v1.4 https://freeswitch.org/stash/scm/fs/freeswitch.git
+mkdir /usr/src/freeswitch
 cd /usr/src/freeswitch
-./bootstrap.sh -j
-./configure 
-cd /usr/src/freeswitch/libs/esl
-make
-make perlmod-install
+git clone -b v1.6 https://freeswitch.org/stash/scm/fs/freeswitch.git src
+cd src
+./bootstrap.sh -j && ./configure 
+cd libs/esl
+make && make perlmod-install
 
 cd /opt
 git clone https://github.com/voxserv/freeswitch-perf-dialer.git
@@ -98,8 +100,7 @@ Usage
 -----
 
 ```
-perl /opt/freeswitch-perf-dialer/dialer.pl --help
-
+# perl /opt/freeswitch-perf-dialer/dialer.pl --help
 Usage: /opt/freeswitch-perf-dialer/dialer.pl [options...]
 Options:
   --fs_host=HOST    [127.0.0.1] FreeSWITCH host
@@ -108,10 +109,16 @@ Options:
   --cid=NUMBER      [12126647665] caller ID
   --dest=NUMBER     [13115552368] destination number
   --context=NAME    [public] FreeSWITCH context name
+  --endpoint=STRING destination endpoint
   --duration=N      [60] call duration in seconds
   --ncalls=N        [10] total number of calls
   --cps=N           [10] rate in calls per second
+  --play=STRING     [local_stream://moh] playback argument
   --help            this help message
+
+If endpoint is specified, --dest and --context are ignored.
+Otherwise, the call is sent to the loopback endpoint with the specified
+context and destination number
 ```
 
 Author and License
