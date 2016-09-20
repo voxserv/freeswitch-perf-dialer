@@ -41,7 +41,8 @@ my $endpoint;
 my $duration = 60;
 my $ncalls = 10;
 my $forever;
-my $cps = 10;
+my $interval;
+my $cps;
 
 my $help_needed;
 
@@ -58,6 +59,7 @@ my $ok = GetOptions
      'ncalls=i'      => \$ncalls,
      'forever'       => \$forever,
      'cps=f'         => \$cps,
+     'interval=f'    => \$interval,
      'play=s'        => \$playback,
      'help'          => \$help_needed,
     );
@@ -65,7 +67,7 @@ my $ok = GetOptions
 
 if( not $ok or $help_needed or scalar(@ARGV) > 0 )
 {
-    print STDERR "Usage: $0 [options...]\n",
+    print STDERR "Usage: $0 --cps=10 [options...]\n",
     "Options:\n",
     "  --fs_host=HOST    \[$fs_host\] FreeSWITCH host\n",
     "  --fs_port=PORT    \[$fs_port\] FreeSWITCH ESL port\n",
@@ -77,7 +79,8 @@ if( not $ok or $help_needed or scalar(@ARGV) > 0 )
     "  --duration=N      \[$duration\] call duration in seconds\n",
     "  --ncalls=N        \[$ncalls\] total number of calls\n",
     "  --forever         run endlessly and ignore ncalls\n",
-    "  --cps=N           \[$cps\] rate in calls per second\n",
+    "  --cps=N           rate in calls per second\n",
+    "  --interval=N      interval between calls in seconds (CPS\*\*-1)\n",
     "  --play=STRING     \[$playback\] playback argument\n",
     "  --help            this help message\n",
     "\n",
@@ -88,6 +91,19 @@ if( not $ok or $help_needed or scalar(@ARGV) > 0 )
     ;
     exit 1;
 }
+
+if( defined($cps) and defined($interval) )
+{
+    print STDERR "Only one of CPS and interval must be defined\n";
+    exit 1;
+}
+
+if( not defined($cps) and not defined($interval) )
+{
+    print STDERR "Either CPS or interval must be defined\n";
+    exit 1;
+}
+
 
 my $originate_string =
     'originate ' .
@@ -115,14 +131,16 @@ my $esl = new ESL::ESLconnection($fs_host,
 
 $esl->connected() or die("Cannot connect to FreeSWITCH");
 
-my $interval = 1.0/$cps;
+if( not defined($interval) )
+{
+    $interval = 1.0/$cps;
+}
+
 my $nc = 0;
 my $start = Time::HiRes::time();
 
 while( $forever or $nc < $ncalls )
 {
-    $nc++;
-
     my $next_time = $start + $nc * $interval;
     my $now = Time::HiRes::time();
     if( $next_time > $now )
@@ -139,4 +157,5 @@ while( $forever or $nc < $ncalls )
            $nc,
            POSIX::strftime('%Y-%m-%d %H:%M:%S', localtime($time_epoch)),
            $time_hires);
+    $nc++;
 }
