@@ -87,6 +87,7 @@ if( not $ok or $help_needed or scalar(@ARGV) > 0 )
     "If endpoint is specified, --dest and --context are ignored.\n",
     "Otherwise, the call is sent to the loopback endpoint with the specified\n",
     "context and destination number\n",
+    "The question mark characters (?) in numbers are replaced with random digits\n",
     "\n",
     ;
     exit 1;
@@ -142,6 +143,15 @@ my $start = Time::HiRes::time();
 while( $forever or $nc < $ncalls )
 {
     my $next_time = $start + $nc * $interval;
+
+    # Replace "?" with random digits
+    my $orig_str = $originate_string;
+    while( $orig_str =~ /\?/o )
+    {
+        my $random_digit = sprintf('%d', rand(10));
+        $orig_str =~ s/\?/$random_digit/;
+    }
+        
     my $now = Time::HiRes::time();
     if( $next_time > $now )
     {
@@ -150,7 +160,7 @@ while( $forever or $nc < $ncalls )
 
     my $uuid = $esl->api('create_uuid')->getBody();
     my ($time_epoch, $time_hires) = Time::HiRes::gettimeofday();
-    $esl->bgapi(sprintf($originate_string, $uuid));
+    $esl->bgapi(sprintf($orig_str, $uuid));
     $esl->bgapi(sprintf('sched_hangup +%d %s', $duration, $uuid));
 
     printf("%.6d: %s.%.6d\n",
