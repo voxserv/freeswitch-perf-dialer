@@ -112,7 +112,7 @@ my $originate_string =
     'origination_uuid=%s,' . 
     'originate_timeout=60,' .
     'origination_caller_id_number=' . $callerid . ',' .
-    'origination_caller_id_name=' . $callerid . '}';
+    'origination_caller_id_name=dialer_pl}';
 
 if( defined($endpoint) )
 {
