@@ -43,6 +43,9 @@ my $ncalls = 10;
 my $forever;
 my $interval;
 my $cps;
+my $rnd_interval;
+my $rnd_cps;
+
 
 my $help_needed;
 
@@ -60,6 +63,8 @@ my $ok = GetOptions
      'forever'       => \$forever,
      'cps=f'         => \$cps,
      'interval=f'    => \$interval,
+     'rc=f'          => \$rnd_cps,
+     'ri=f'          => \$rnd_interval,
      'play=s'        => \$playback,
      'help'          => \$help_needed,
     );
@@ -79,8 +84,10 @@ if( not $ok or $help_needed or scalar(@ARGV) > 0 )
     "  --duration=N      \[$duration\] call duration in seconds\n",
     "  --ncalls=N        \[$ncalls\] total number of calls\n",
     "  --forever         run endlessly and ignore ncalls\n",
-    "  --cps=N           rate in calls per second\n",
-    "  --interval=N      interval between calls in seconds (CPS\*\*-1)\n",
+    "  --cps=F           rate in calls per second\n",
+    "  --interval=F      interval between calls in seconds (CPS\*\*-1)\n",
+    "  --rc=F            random factor in CPS (should be higher than CPS*2)\n",
+    "  --ri=F            random factor in interval (should be less than interval/2)\n",
     "  --play=STRING     \[$playback\] playback argument\n",
     "  --help            this help message\n",
     "\n",
@@ -105,6 +112,35 @@ if( not defined($cps) and not defined($interval) )
     exit 1;
 }
 
+if( defined($rnd_cps) )
+{
+    if( not defined($cps) )
+    {
+        print STDERR "--rc can only be defined together with --cps\n";
+        exit 1;
+    }
+    elsif( $rnd_cps < $cps * 2 )
+    {
+        print STDERR "--rc shoudl be higher than CPS*2\n";
+        exit 1;
+    }    
+}
+
+if( defined($rnd_interval) )
+{
+    if( not defined($interval) )
+    {
+        print STDERR "--ri can only be defined together with --interval\n";
+        exit 1;
+    }
+    elsif( $rnd_interval > $interval / 2 )
+    {
+        print STDERR "--ri should be lower than interval/2\n";
+        exit 1;
+    }
+}
+
+        
 
 my $originate_string =
     'originate ' .
@@ -137,6 +173,12 @@ if( not defined($interval) )
     $interval = 1.0/$cps;
 }
 
+if( defined($rnd_cps) )
+{
+    $rnd_interval = 1.0/$rnd_cps;
+}
+        
+
 my $nc = 0;
 my $start = Time::HiRes::time();
 
@@ -144,6 +186,11 @@ while( $forever or $nc < $ncalls )
 {
     my $next_time = $start + $nc * $interval;
 
+    if( defined($rnd_interval) )
+    {
+        $next_time += rand($rnd_interval);
+    }
+            
     # Replace "?" with random digits
     my $orig_str = $originate_string;
     while( $orig_str =~ /\?/o )
