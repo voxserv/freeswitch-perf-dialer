@@ -62,6 +62,25 @@ perl /opt/freeswitch-perf-dialer/dialer.pl --cid='+3333???????' \
  --endpoint='sofia/gateway/voxbeam/+777???????' --cps=5 --forever
 ```
 
+Transferring instead of playback
+--------------------------------
+
+The `--exec` option allows you to send the call to a dialplan context
+instead of playing back the media. The following example sends the call
+after originating to default dialplan context, with destination number
+12345678 and caller ID 87654321:
+
+```
+perl /opt/freeswitch-perf-dialer/dialer.pl --cid='12345678' \
+ --endpoint='sofia/gateway/voxbeam/87654321' --cps=5 --forever \
+ --exec='12345678 XML default 87654321 87654321'
+```
+
+The general syntax of the exec string is as follows:
+
+```
+<destnumber> XML <context> <caller_id_name> <caller_id_number>
+```
 
 
 Installing on Debian 8

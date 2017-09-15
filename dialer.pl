@@ -37,6 +37,7 @@ my $dest = '13115552368';
 my $playback = 'local_stream://moh';
 my $context = 'public';
 my $endpoint;
+my $exec;
 
 my $duration = 60;
 my $ncalls = 10;
@@ -66,6 +67,7 @@ my $ok = GetOptions
      'rc=f'          => \$rnd_cps,
      'ri=f'          => \$rnd_interval,
      'play=s'        => \$playback,
+     'exec=s'        => \$exec,
      'help'          => \$help_needed,
     );
 
@@ -86,9 +88,10 @@ if( not $ok or $help_needed or scalar(@ARGV) > 0 )
     "  --forever         run endlessly and ignore ncalls\n",
     "  --cps=F           rate in calls per second\n",
     "  --interval=F      interval between calls in seconds (CPS\*\*-1)\n",
-    "  --rc=F            random factor in CPS (should be higher than CPS*2)\n",
-    "  --ri=F            random factor in interval (should be less than interval/2)\n",
+    "  --rc=F     random factor in CPS (should be higher than CPS*2)\n",
+    "  --ri=F     random factor in interval (should be less than interval/2)\n",
     "  --play=STRING     \[$playback\] playback argument\n",
+    "  --exec=STRING     application to execute instead of playback\n",
     "  --help            this help message\n",
     "\n",
     "If endpoint is specified, --dest and --context are ignored.\n",
@@ -159,7 +162,14 @@ else
     $originate_string .= 'loopback/' . $dest . '/' . $context;
 }
 
-$originate_string .=  ' ' . '&playback(' . $playback . ')';
+if( defined($exec) )
+{
+    $originate_string .=  ' ' . $exec;
+}
+else
+{
+    $originate_string .=  ' ' . '&playback(' . $playback . ')';
+}
 
 
 my $esl = new ESL::ESLconnection($fs_host,
